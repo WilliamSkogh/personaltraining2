@@ -3,7 +3,7 @@ Globals = Obj(new
 {
     debugOn = true,
     detailedAclDebug = false,
-    aclOn = true,
+    aclOn = false, // temporärt false för att slippa krångel med ACL under utveckling
     isSpa = true,
     port = args[0],
     serverName = "Minimal API Backend",

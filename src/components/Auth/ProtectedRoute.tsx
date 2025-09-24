@@ -12,18 +12,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, adminOnly = f
   const { isAuthenticated, isAdmin, isLoading } = useAuth();
 
   if (isLoading) {
-    return <LoadingSpinner text="Laddar..." />;
+    return React.createElement(LoadingSpinner, { text: 'Laddar...' });
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return React.createElement(Navigate, { to: '/login', replace: true });
   }
 
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return React.createElement(Navigate, { to: '/dashboard', replace: true });
   }
 
-  return <>{children}</>;
+  return React.createElement(React.Fragment, null, children);
 };
 
 export default ProtectedRoute;
