@@ -28,12 +28,20 @@ public static class RequestBodyParser
                 cleaned.PasswordHash = Password.Encrypt(cleaned.password + "");
                 cleaned.Delete("password");
             }
+            if (cleaned.HasKey("role"))
+            {
+                cleaned.Role = cleaned.role;
+                cleaned.Delete("role");
+            }
+            if (!cleaned.HasKey("Role") || cleaned.Role == null || cleaned.Role == "")
+            {
+                cleaned.Role = "user";
+            }
         }
 
         Arr keysArr = (Arr)cleaned.GetKeys();
         var insertColumns = keysArr.Join(",");
         var insertValues = "$" + keysArr.Join(",$");
-
         var noId = keysArr.Filter(x => x != "Id" && x != "id");
         var update = ((Arr)noId.Map(x => $"{x}=${x}")).Join(",");
 
