@@ -32,47 +32,49 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock användare
-const mockUsers = [
-  { id: 1, username: 'admin', password: 'admin', email: 'admin@test.com', role: 'admin' as const },
-  { id: 2, username: 'user', password: 'user', email: 'user@test.com', role: 'user' as const }
-];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = async (credentials: LoginCredentials) => {
-    setIsLoading(true);
+ const login = async (credentials: LoginCredentials) => {
+  setIsLoading(true);
+  try {
+    const response = await fetch('http://localhost:5000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: credentials.username,  // Backend förväntar sig 'email'
+        password: credentials.password
+      })
+    });
     
-    // Simulera API-anrop
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const foundUser = mockUsers.find(u => 
-      u.username === credentials.username && u.password === credentials.password
-    );
-    
-    if (foundUser) {
-      const loggedInUser = {
-        id: foundUser.id,
-        username: foundUser.username,
-        email: foundUser.email,
-        role: foundUser.role,
-        createdAt: new Date().toISOString()
-      };
-      setUser(loggedInUser);
-    } else {
-      throw new Error('Fel användarnamn eller lösenord');
+    if (!response.ok) {
+      throw new Error('Login failed');
     }
     
+    const data = await response.json();
+    
+    // Kolla om backend returnerade error
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    setUser(data);
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Login failed');
+  } finally {
     setIsLoading(false);
-  };
+  }
+};
+    
+  
 
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     
     // Simulera API-anrop
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     const newUser = {
       id: Date.now(),
