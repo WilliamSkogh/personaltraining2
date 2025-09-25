@@ -1,113 +1,93 @@
-// src/hooks/useAuth.ts
-import React, { useState, createContext, useContext } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { authAPI, type LoginCredentials, type User } from '../services/api';
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: 'user' | 'admin';
-  createdAt: string;
-}
-
-interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-}
-
-interface AuthContextType {
+type AuthContextValue = {
   user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  loading: boolean;
+  error: string | null;
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
-  isAdmin: boolean;
-}
+  logout: () => Promise<void>;
+  refresh: () => Promise<void>;
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
- const login = async (credentials: LoginCredentials) => {
-  setIsLoading(true);
-  try {
-    const response = await fetch('http://localhost:5000/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: credentials.username,  // Backend förväntar sig 'email'
-        password: credentials.password
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Login failed');
+  const refresh = useCallback(async () => {
+    try {
+      setError(null);
+
+      const me = await authAPI.getCurrentUser();
+      setUser(me ?? null);
+    } catch {
+
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    
-    const data = await response.json();
-    
-    // Kolla om backend returnerade error
-    if (data.error) {
-      throw new Error(data.error);
+  }, []);
+
+  useEffect(() => {
+
+    refresh();
+  }, [refresh]);
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    setLoading(true);
+    setError(null);
+    try {
+
+      const { user: loggedIn } = await authAPI.login(credentials);
+      setUser(loggedIn ?? null);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'Inloggningen misslyckades. Kontrollera e-post och lösenord.';
+      setError(msg);
+      setUser(null);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-    
-    setUser(data);
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Login failed');
-  } finally {
-    setIsLoading(false);
-  }
-};
-    
-  
+  }, []);
 
-  const register = async (userData: RegisterData) => {
-    setIsLoading(true);
-    
-    // Simulera API-anrop
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const newUser = {
-      id: Date.now(),
-      username: userData.username,
-      email: userData.email,
-      role: 'user' as const,
-      createdAt: new Date().toISOString()
-    };
-    setUser(newUser);
-    setIsLoading(false);
-  };
+  const logout = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await authAPI.logout();
+      setUser(null);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'Utloggningen misslyckades.';
+      setError(msg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const logout = () => {
-    setUser(null);
-  };
-
-  const value = {
+  const value = useMemo<AuthContextValue>(() => ({
     user,
-    isAuthenticated: !!user,
-    isLoading,
+    loading,
+    error,
     login,
-    register,
     logout,
-    isAdmin: user?.role === 'admin'
-  };
+    refresh
+  }), [user, loading, error, login, logout, refresh]);
 
-  return React.createElement(AuthContext.Provider, { value }, children);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth måste användas inom <AuthProvider>');
+  return ctx;
 };

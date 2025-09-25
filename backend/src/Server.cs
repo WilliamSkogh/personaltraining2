@@ -1,11 +1,22 @@
+// backend/src/Server.cs
 namespace WebApp;
+
 public static class Server
 {
     public static void Start()
     {
+
+        int port = 3001;
+        try { port = (int)(Globals.port ?? 3001); } catch {  }
+
         var builder = WebApplication.CreateBuilder();
-        App = builder.Build();
-        Middleware();
+        builder.WebHost.UseUrls($"http://localhost:{port}", $"http://0.0.0.0:{port}");
+
+        Shared.App = builder.Build();
+        var app = Shared.App;
+
+
+        Middleware(app);
         DebugLog.Start();
         Acl.Start();
         ErrorHandler.Start();
@@ -13,50 +24,26 @@ public static class Server
         LoginRoutes.Start();
         RestApi.Start();
         Session.Start();
-        // Start the server on port 3001
-        var runUrl = "http://localhost:" + Globals.port;
-        Log("Server running on:", runUrl);
-        Log("With these settings:", Globals);
-        App.Run(runUrl);
+
+
+        DevResetRoutes.Start();
+
+        var urls = app.Urls?.ToArray() ?? Array.Empty<string>();
+        if (urls.Length == 0) urls = new[] { $"http://localhost:{port}" };
+        Console.WriteLine($"[SERVER] Listening on:");
+        foreach (var u in urls) Console.WriteLine($"  • {u}");
+
+        app.Run();
     }
 
-    // Middleware that changes the server response header,
-    // initiates the debug logging for the request,
-    // keep sessions alive, stops the route if not acl approved
-    // and adds some info for debugging
-    public static void Middleware()
+    private static void Middleware(WebApplication app)
     {
-        App.Use(async (context, next) =>
+        app.Use(async (context, next) =>
         {
-            context.Response.Headers.Append("Server", (string)Globals.serverName);
-            DebugLog.Register(context);
-            Session.Touch(context);
-            if (!Acl.Allow(context))
-            {
-                // Acl says the route is not allowed
-                context.Response.StatusCode = 405;
-                var error = new { error = "Not allowed." };
-                DebugLog.Add(context, error);
-                await context.Response.WriteAsJsonAsync(error);
-            }
-            else { await next(context); }
-            // Add some extra info for debugging
-            var res = context.Response;
-            var contentLength = res.ContentLength;
-            contentLength = contentLength == null ? 0 : contentLength;
-            var info = Obj(new
-            {
-                statusCode = res.StatusCode,
-                contentType = res.ContentType,
-                contentLengthKB =
-                    Math.Round((double)contentLength / 10.24) / 100,
-                RESPONSE_DONE = Now
-            });
-            if (info.contentLengthKB == null || info.contentLengthKB == 0)
-            {
-                info.Delete("contentLengthKB");
-            }
-            DebugLog.Add(context, info);
+            var t0 = DateTime.UtcNow;
+            await next.Invoke();
+            var dt = (int)(DateTime.UtcNow - t0).TotalMilliseconds;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {context.Request.Method} {context.Request.Path}  {context.Response.StatusCode}  ({dt} ms)");
         });
     }
 }
