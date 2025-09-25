@@ -1,25 +1,47 @@
 namespace WebApp;
+
 public static class RequestBodyParser
 {
     public static dynamic ReqBodyParse(string table, Obj body)
     {
-        // Always remove "role" for users table
-        var keys = body.GetKeys().Filter(key => table != "users" || key != "role");
-        // Clean up the body by converting strings to numbers when possible
         var cleaned = Obj();
-        body.GetKeys().ForEach(key
-            => cleaned[key] = ((object)(body[key])).TryToNumber());
-        // Always encrypt fields named "password"
-        if (cleaned.HasKey("password"))
+        foreach (var key in body.GetKeys())
         {
-            cleaned.password = Password.Encrypt(cleaned.password + "");
+            cleaned[key] = ((object)body[key]).TryToNumber();
         }
-        // Return parts to use when building the SQL query + the cleaned body
+
+        var isUsers = string.Equals(table, "users", StringComparison.OrdinalIgnoreCase);
+        if (isUsers)
+        {
+            if (cleaned.HasKey("email"))
+            {
+                cleaned.Email = cleaned.email;
+                cleaned.Delete("email");
+            }
+            if (cleaned.HasKey("username"))
+            {
+                cleaned.Username = cleaned.username;
+                cleaned.Delete("username");
+            }
+            if (cleaned.HasKey("password"))
+            {
+                cleaned.PasswordHash = Password.Encrypt(cleaned.password + "");
+                cleaned.Delete("password");
+            }
+        }
+
+        Arr keysArr = (Arr)cleaned.GetKeys();
+        var insertColumns = keysArr.Join(",");
+        var insertValues = "$" + keysArr.Join(",$");
+
+        var noId = keysArr.Filter(x => x != "Id" && x != "id");
+        var update = ((Arr)noId.Map(x => $"{x}=${x}")).Join(",");
+
         return Obj(new
         {
-            insertColumns = keys.Join(","),
-            insertValues = "$" + keys.Join(",$"),
-            update = keys.Filter(key => key != "id").Map(key => $"{key}=${key}").Join(","),
+            insertColumns,
+            insertValues,
+            update,
             body = cleaned
         });
     }
