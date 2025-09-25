@@ -4,9 +4,23 @@ public static class DbQuery
 {
     // Setup the database connection
     private static SqliteConnection db =
-        new SqliteConnection("Data Source=" + Globals.dbPath);
+        new SqliteConnection("Data Source=" + Globals.dbPath + ";Cache=Shared;");
 
-    static DbQuery() { db.Open(); }
+    static DbQuery()
+    {
+        db.Open();
+        try
+        {
+            using var cmd = db.CreateCommand();
+            cmd.CommandText = @"
+PRAGMA journal_mode=WAL;
+PRAGMA synchronous=NORMAL;
+PRAGMA busy_timeout=1000;
+";
+            cmd.ExecuteNonQuery();
+        }
+        catch { }
+    }
 
     // Helper to create an object from the DataReader
     private static dynamic ObjFromReader(SqliteDataReader reader)
@@ -52,7 +66,7 @@ public static class DbQuery
     )
     {
         var paras = parameters == null ? Obj() : Obj(parameters);
-        var command = db.CreateCommand();
+        using var command = db.CreateCommand();
         command.CommandText = @sql;
         var entries = (Arr)paras.GetEntries();
         entries.ForEach(x => command.Parameters.AddWithValue(x[0], x[1]));
@@ -69,7 +83,7 @@ public static class DbQuery
         {
             if (sql.StartsWith("SELECT ", true, null))
             {
-                var reader = command.ExecuteReader();
+                using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
                     rows.Push(ObjFromReader(reader));
@@ -86,7 +100,12 @@ public static class DbQuery
         }
         catch (Exception err)
         {
-            rows.Push(new { error = err.Message.Split("'")[1] });
+            var msg = err.Message;
+            if (msg.Contains("'"))
+            {
+                try { msg = msg.Split('\'')[1]; } catch { }
+            }
+            rows.Push(new { error = msg });
         }
         return rows;
     }

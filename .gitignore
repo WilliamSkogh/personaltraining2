@@ -5,6 +5,8 @@
 # create it from db_template/_db.sqlite3
 backend/_db.sqlite3
 backend/_db.sqlite3-journal
+backend/_db.sqlite3-wal
+backend/_db.sqlite3-shm
 
 
 # Do not git control build related .NET folders
