@@ -33,7 +33,7 @@ public static class LoginRoutes
             // If the password doesn't match
             if (!Password.Verify(
                 (string)body.password,
-                (string)dbUser.password
+                (string)dbUser.PasswordHash 
             ))
             {
                 return RestResult.Parse(context,

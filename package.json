@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
-  },
+"scripts": {
+  "dev": "concurrently \"cd backend && dotnet run 3001 ../dist _db.sqlite3\" \"vite\"",
+  "build": "tsc && vite build",
+  "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+  "preview": "vite preview"
+},
   "dependencies": {
     "axios": "^1.7.0",
     "bootstrap": "^5.3.3",
@@ -22,6 +22,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.0.0",
     "typescript": "^5.5.0",
     "typescript-eslint": "^8.0.0",

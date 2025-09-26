@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import React, { useState, createContext, useContext } from 'react';
 
 interface User {
@@ -32,59 +31,74 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
- const login = async (credentials: LoginCredentials) => {
-  setIsLoading(true);
-  try {
-    const response = await fetch('http://localhost:5000/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: credentials.username,  // Backend förväntar sig 'email'
-        password: credentials.password
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error('Login failed');
+  const login = async (credentials: LoginCredentials) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: credentials.username,  // Backend förväntar sig 'email'
+          password: credentials.password
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Login failed');
+      }
+      
+      const data = await response.json();
+      
+      // Kolla om backend returnerade error
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setUser(data);
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
-    
-    const data = await response.json();
-    
-    // Kolla om backend returnerade error
-    if (data.error) {
-      throw new Error(data.error);
-    }
-    
-    setUser(data);
-  } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Login failed');
-  } finally {
-    setIsLoading(false);
-  }
-};
-    
-  
+  };
 
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
-    
-    // Simulera API-anrop
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const newUser = {
-      id: Date.now(),
-      username: userData.username,
-      email: userData.email,
-      role: 'user' as const,
-      createdAt: new Date().toISOString()
-    };
-    setUser(newUser);
-    setIsLoading(false);
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Username: userData.username,
+          Email: userData.email,
+          password: userData.password
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      // Efter registrering, logga in automatiskt
+      await login({ username: userData.email, password: userData.password });
+      
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Registration failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = () => {

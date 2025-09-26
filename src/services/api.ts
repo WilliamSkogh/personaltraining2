@@ -1,4 +1,3 @@
-// src/services/api.ts
 import axios from 'axios';
 import {
   User,
@@ -13,7 +12,8 @@ import {
   ExportData
 } from '../types';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+// FIXAD: Använd relativ URL så proxyn fungerar
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,34 +44,42 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
+// Auth API - Anpassad för din .NET backend
 export const authAPI = {
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', credentials);
+  login: async (credentials: LoginCredentials): Promise<User> => {
+    const response = await api.post('/login', {
+      email: credentials.username, // Backend förväntar email
+      password: credentials.password
+    });
     return response.data;
   },
 
-  register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response = await api.post('/auth/register', userData);
+  register: async (userData: RegisterData): Promise<User> => {
+    const response = await api.post('/users', {
+      Username: userData.username,
+      Email: userData.email,
+      password: userData.password
+    });
     return response.data;
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get('/auth/me');
+    const response = await api.get('/login');
     return response.data;
   },
 
-  logout: () => {
+  logout: async () => {
+    await api.delete('/login');
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
   }
 };
 
-// Workouts API
+// Workouts API - Dessa endpoints behöver skapas i backend senare
 export const workoutsAPI = {
   getAll: async (): Promise<WorkoutSession[]> => {
-    const response = await api.get('/workouts');
-    return response.data;
+    // Tillfälligt: returnera tom array tills endpoints finns
+    return [];
   },
 
   getById: async (id: number): Promise<WorkoutSession> => {
@@ -94,8 +102,13 @@ export const workoutsAPI = {
   },
 
   getStats: async (): Promise<WorkoutStats> => {
-    const response = await api.get('/workouts/stats');
-    return response.data;
+    // Tillfälligt: returnera mock-data
+    return {
+      totalWorkouts: 0,
+      totalDuration: 0,
+      favoriteExercise: '',
+      weeklyProgress: []
+    };
   },
 
   search: async (query: string): Promise<WorkoutSession[]> => {
@@ -104,7 +117,7 @@ export const workoutsAPI = {
   }
 };
 
-// Exercises API
+// Exercises API - Används generiska REST endpoints
 export const exercisesAPI = {
   getAll: async (): Promise<Exercise[]> => {
     const response = await api.get('/exercises');
@@ -138,7 +151,7 @@ export const exercisesAPI = {
   }
 };
 
-// Goals API
+// Goals API - Används generiska REST endpoints
 export const goalsAPI = {
   getAll: async (): Promise<Goal[]> => {
     const response = await api.get('/goals');
@@ -170,7 +183,7 @@ export const goalsAPI = {
   }
 };
 
-// Export API
+// Export API - Framtida funktionalitet
 export const exportAPI = {
   exportToCSV: async (): Promise<string> => {
     const response = await api.get('/export/csv', { responseType: 'text' });
@@ -183,24 +196,28 @@ export const exportAPI = {
   }
 };
 
-// Admin API
+// Admin API - Använder users endpoints
 export const adminAPI = {
   getAllUsers: async (): Promise<User[]> => {
-    const response = await api.get('/admin/users');
+    const response = await api.get('/users');
     return response.data;
   },
 
   deleteUser: async (id: number): Promise<void> => {
-    await api.delete(`/admin/users/${id}`);
+    await api.delete(`/users/${id}`);
   },
 
   updateUserRole: async (id: number, role: 'user' | 'admin'): Promise<User> => {
-    const response = await api.patch(`/admin/users/${id}/role`, { role });
+    const response = await api.put(`/users/${id}`, { Role: role });
     return response.data;
   },
 
   getSystemStats: async () => {
-    const response = await api.get('/admin/stats');
-    return response.data;
+    // Tillfällig mock-data
+    return {
+      totalUsers: 0,
+      totalWorkouts: 0,
+      activeUsers: 0
+    };
   }
 };
