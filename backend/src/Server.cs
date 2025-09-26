@@ -1,15 +1,15 @@
-// backend/src/Server.cs
 namespace WebApp;
 
 public static class Server
 {
     public static void Start()
     {
-
         int port = 3001;
-        try { port = (int)(Globals.port ?? 3001); } catch {  }
+        try { port = (int)(Globals.port ?? 3001); } catch { }
 
         var builder = WebApplication.CreateBuilder();
+
+
         builder.WebHost.UseUrls($"http://localhost:{port}", $"http://0.0.0.0:{port}");
 
         Shared.App = builder.Build();
@@ -24,26 +24,26 @@ public static class Server
         LoginRoutes.Start();
         RestApi.Start();
         Session.Start();
-
-
         DevResetRoutes.Start();
+
 
         var urls = app.Urls?.ToArray() ?? Array.Empty<string>();
         if (urls.Length == 0) urls = new[] { $"http://localhost:{port}" };
-        Console.WriteLine($"[SERVER] Listening on:");
+        Console.WriteLine("[SERVER] Listening on:");
         foreach (var u in urls) Console.WriteLine($"  • {u}");
+
 
         app.Run();
     }
 
     private static void Middleware(WebApplication app)
     {
-        app.Use(async (context, next) =>
+        app.Use(async (ctx, next) =>
         {
             var t0 = DateTime.UtcNow;
-            await next.Invoke();
-            var dt = (int)(DateTime.UtcNow - t0).TotalMilliseconds;
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {context.Request.Method} {context.Request.Path}  {context.Response.StatusCode}  ({dt} ms)");
+            await next();
+            var ms = (int)(DateTime.UtcNow - t0).TotalMilliseconds;
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {ctx.Request.Method} {ctx.Request.Path}  {ctx.Response.StatusCode}  ({ms} ms)");
         });
     }
 }

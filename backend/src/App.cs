@@ -1,34 +1,26 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-
-
-
-
-int portValue = 3001;
-
-
-string dbPathValue = "C:\\Users\\William\\source\\repos\\exemple-branching-dev\\db_template\\_db.sqlite3";
-
-
-string frontendPathValue = @"C:\Users\William\source\repos\exemple-branching-dev\frontend\dist";
 
 
 Globals = Obj(new
 {
     debugOn = true,
     detailedAclDebug = false,
-    aclOn = false,                
-    aclRules = new object[] { },  
-    isSpa = false,                 
-    port = portValue,
+    aclOn = false,
+    aclRules = new object[] { },
+    isSpa = false, 
+    port = 3001,
     serverName = "Minimal API Backend",
-    frontendPath = frontendPathValue, 
-    dbPath = dbPathValue,
+
+
+    dbPath = @"C:\Users\William\source\repos\exemple-branching-dev\backend\db_template\_db.sqlite3",
+
+    frontendPath = @"C:\Users\William\source\repos\exemple-branching-dev\frontend\dist",
+
     sessionLifeTimeHours = 2
 });
+
+
+Console.WriteLine($"[BOOT] dbPath={Globals.dbPath}");
 
 
 Server.Start();

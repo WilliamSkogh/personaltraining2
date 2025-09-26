@@ -2,8 +2,22 @@ namespace WebApp;
 
 public static partial class Session
 {
+    private static void EnsureSessionsTable()
+    {
+        SQLQuery(@"
+            CREATE TABLE IF NOT EXISTS sessions (
+                id       TEXT PRIMARY KEY,
+                data     TEXT NOT NULL DEFAULT '{}',
+                created  TEXT NOT NULL DEFAULT (DATETIME('now')),
+                modified TEXT
+            );
+        ");
+    }
+
     private static dynamic GetRawSession(HttpContext context)
     {
+        EnsureSessionsTable();
+
         var inContext = context.Items["session"];
         if (inContext != null) return inContext;
 
@@ -18,7 +32,7 @@ public static partial class Session
                 HttpOnly = true,
                 SameSite = SameSiteMode.Lax,
                 Secure = context.Request.IsHttps,
-                MaxAge = TimeSpan.FromHours(2)
+                MaxAge = TimeSpan.FromHours((int)(Globals.sessionLifeTimeHours ?? 2))
             };
 
             context.Response.Cookies.Append("session", cookieValue, opts);
@@ -29,9 +43,9 @@ public static partial class Session
             new { id = cookieValue }
         );
 
-        if (session == null)
+        if (session == null || session.HasKey("error"))
         {
-            SQLQuery("INSERT INTO sessions(id) VALUES($id)", new { id = cookieValue });
+            SQLQuery("INSERT INTO sessions(id, data) VALUES($id, '{}')", new { id = cookieValue });
             session = Obj(new { id = cookieValue, data = "{}" });
         }
 
@@ -41,6 +55,7 @@ public static partial class Session
 
     public static void Start()
     {
+        EnsureSessionsTable();
         DeleteOldSessions();
     }
 
