@@ -19,11 +19,11 @@ public static class RequestBodyParser
         // Always encrypt fields named "password" OR "PasswordHash"
         if (cleaned.HasKey("password"))
         {
-            cleaned.password = Password.Encrypt(cleaned.password + "");
+            cleaned["password"] = Password.Encrypt(cleaned["password"] + "");
         }
         if (cleaned.HasKey("PasswordHash"))
         {
-            cleaned.PasswordHash = Password.Encrypt(cleaned.PasswordHash + "");
+            cleaned["PasswordHash"] = Password.Encrypt(cleaned["PasswordHash"] + "");
         }
         // Return parts to use when building the SQL query + the cleaned body
         return Obj(new

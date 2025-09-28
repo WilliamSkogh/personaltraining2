@@ -54,8 +54,29 @@ public static class DbQuery
         var paras = parameters == null ? Obj() : Obj(parameters);
         var command = db.CreateCommand();
         command.CommandText = @sql;
+        
+        // BUGFIX: Safe parameter handling
         var entries = (Arr)paras.GetEntries();
-        entries.ForEach(x => command.Parameters.AddWithValue(x[0], x[1]));
+        foreach (var entry in entries)
+        {
+            var entryArray = (Arr)entry;
+            if (entryArray.Length >= 2)
+            {
+                var paramName = entryArray[0].ToString();
+                var paramValue = entryArray[1];
+                
+                // Handle null values properly
+                if (paramValue == null)
+                {
+                    command.Parameters.AddWithValue(paramName, DBNull.Value);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue(paramName, paramValue);
+                }
+            }
+        }
+        
         if (context != null)
         {
             DebugLog.Add(context, new
@@ -74,6 +95,7 @@ public static class DbQuery
                 {
                     rows.Push(ObjFromReader(reader));
                 }
+                reader.Close();
             }
             else
             {

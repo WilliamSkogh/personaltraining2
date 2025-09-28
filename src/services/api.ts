@@ -4,7 +4,6 @@ import {
   WorkoutSession,
   Exercise,
   Goal,
-  AuthResponse,
   LoginCredentials,
   RegisterData,
   CreateWorkoutRequest,

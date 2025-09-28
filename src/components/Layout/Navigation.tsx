@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navbar, Nav, Container, NavDropdown, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -54,7 +54,7 @@ const Navigation: React.FC = () => {
           </Nav>
           
           <Nav>
-            <NavDropdown title={`Hej, ${user?.username}`} id="user-dropdown">
+            <NavDropdown title={`Hej, ${(user as any)?.Username}`} id="user-dropdown">
               <NavDropdown.Item as={Link} to="/profile">
                 Min profil
               </NavDropdown.Item>
