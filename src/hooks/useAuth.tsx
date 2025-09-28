@@ -25,7 +25,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -101,8 +101,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      // Anropa backend logout endpoint
+      await fetch('/api/login', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      // Även om backend-anropet misslyckas, logga ut lokalt
+      console.warn('Backend logout failed:', error);
+    } finally {
+      // Rensa lokal state oavsett
+      setUser(null);
+      setIsLoading(false);
+    }
   };
 
   const value = {

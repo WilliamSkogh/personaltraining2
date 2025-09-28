@@ -14,10 +14,9 @@ public static class LoginRoutes
             var body = JSON.Parse(bodyJson.ToString());
 
             // If there is a user logged in already
-            if (user != null)
+         if (user != null)
             {
-                var already = new { error = "A user is already logged in." };
-                return RestResult.Parse(context, already);
+            Session.Set(context, "user", null);
             }
 
             // Find the user in the DB

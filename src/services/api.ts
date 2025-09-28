@@ -31,14 +31,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor för 401-fel
+// Response interceptor för automatisk logout vid 401-fel
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response?.status === 401) {
+      // Rensa lokal auth-data
       localStorage.removeItem('authToken');
       localStorage.removeItem('currentUser');
-      window.location.href = '/login';
+      
+      // Försök anropa logout endpoint för att rensa session
+      try {
+        await fetch('/api/login', { method: 'DELETE' });
+      } catch (logoutError) {
+        console.warn('Auto-logout backend call failed:', logoutError);
+      }
+      
+      // Redirecta till login (bara om vi inte redan är där)
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

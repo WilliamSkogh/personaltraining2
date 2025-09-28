@@ -1,4 +1,5 @@
 import React from 'react';
+import Navigation from './Navigation';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -6,9 +7,12 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="container py-3">
-      {children}
-    </div>
+    <>
+      <Navigation />
+      <div className="container py-3">
+        {children}
+      </div>
+    </>
   );
 };
 
