@@ -13,6 +13,7 @@ public static class Server
         LoginRoutes.Start();
         ExerciseRoutes.Start();  
         GoalRoutes.Start();
+        StatsRoutes.Start();
         RestApi.Start();
         Session.Start();
         // Start the server on port 3001
