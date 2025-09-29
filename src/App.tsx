@@ -8,6 +8,7 @@ import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import WorkoutsListPage from './pages/Workouts/WorkoutsListPage';
+import WorkoutDetailPage from './pages/Workouts/WorkoutDetailPage';
 import CreateWorkoutPage from './pages/Workouts/CreateWorkoutPage';
 import ExercisesPage from './pages/Exercises/ExercisesPage';
 import GoalsPage from './pages/Goals/GoalsPage';
@@ -35,6 +36,11 @@ const App: React.FC = () => {
             <Route path="/workouts/new" element={
               <ProtectedRoute>
                 <CreateWorkoutPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workouts/:id" element={
+              <ProtectedRoute>
+                <WorkoutDetailPage />
               </ProtectedRoute>
             } />
             <Route path="/exercises" element={

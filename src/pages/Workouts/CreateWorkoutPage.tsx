@@ -26,9 +26,17 @@ const CreateWorkoutPage: React.FC = () => {
   };
 
   const handleExerciseChange = (index: number, field: string, value: string | number) => {
-    setExercises(prev => prev.map((ex, i) => 
-      i === index ? { ...ex, [field]: value } : ex
-    ));
+    setExercises(prev => prev.map((ex, i) => {
+      if (i !== index) return ex;
+      
+      // Alla värden behålls som strängar i state för enklare TypeScript-hantering
+      if (field === 'sets' || field === 'reps') {
+        return { ...ex, [field]: typeof value === 'string' ? parseInt(value) || 1 : value };
+      } else {
+        // Weight och name behålls som strängar
+        return { ...ex, [field]: String(value) };
+      }
+    }));
   };
 
   const addExercise = () => {
@@ -44,10 +52,7 @@ const CreateWorkoutPage: React.FC = () => {
     setError(null);
     setLoading(true);
 
-    // FIX: Använd user.Id istället för user.id (PascalCase)
     const userId = (user as any)?.Id;
-    console.log('User object:', user);
-    console.log('User ID:', userId);
     
     const workoutPayload = {
       name: formData.name,
@@ -56,8 +61,6 @@ const CreateWorkoutPage: React.FC = () => {
       notes: formData.notes,
       userId: userId
     };
-    
-    console.log('Workout payload:', workoutPayload);
 
     try {
       // Skapa träningspass i backend
@@ -67,29 +70,18 @@ const CreateWorkoutPage: React.FC = () => {
         body: JSON.stringify(workoutPayload)
       });
 
-      console.log('Response status:', workoutResponse.status);
-      const responseText = await workoutResponse.text();
-      console.log('Response text:', responseText);
-
       if (!workoutResponse.ok) {
-        let errorData;
-        try {
-          errorData = JSON.parse(responseText);
-        } catch {
-          errorData = { error: responseText };
-        }
+        const errorData = await workoutResponse.json();
         throw new Error(errorData.error || 'Kunde inte skapa träningspass');
       }
 
-      const workout = JSON.parse(responseText);
-      console.log('Created workout:', workout);
+      const workout = await workoutResponse.json();
       const workoutId = workout.insertId || workout.id;
 
       // Lägg till övningar till träningspasset
       for (let i = 0; i < exercises.length; i++) {
         const exercise = exercises[i];
         if (exercise.name.trim()) {
-          // Först, skapa övningen om den inte finns
           let exerciseId = null;
           
           // Försök hitta befintlig övning
@@ -134,7 +126,7 @@ const CreateWorkoutPage: React.FC = () => {
                 exerciseId: exerciseId,
                 sets: exercise.sets,
                 reps: exercise.reps,
-                weight: exercise.weight ? parseFloat(exercise.weight) : null,
+                weight: exercise.weight && exercise.weight !== '' ? parseFloat(exercise.weight) : null,
                 orderIndex: i
               })
             });
@@ -214,7 +206,7 @@ const CreateWorkoutPage: React.FC = () => {
                   <Card key={index} className="mb-3">
                     <Card.Body>
                       <Row className="align-items-end">
-                        <Col md={6}>
+                        <Col md={5}>
                           <Form.Group>
                             <Form.Label>Övning</Form.Label>
                             <Form.Control
@@ -232,7 +224,7 @@ const CreateWorkoutPage: React.FC = () => {
                             <Form.Control
                               type="number"
                               value={exercise.sets}
-                              onChange={(e) => handleExerciseChange(index, 'sets', parseInt(e.target.value) || 1)}
+                              onChange={(e) => handleExerciseChange(index, 'sets', e.target.value)}
                               min="1"
                             />
                           </Form.Group>
@@ -243,20 +235,21 @@ const CreateWorkoutPage: React.FC = () => {
                             <Form.Control
                               type="number"
                               value={exercise.reps}
-                              onChange={(e) => handleExerciseChange(index, 'reps', parseInt(e.target.value) || 1)}
+                              onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
                               min="1"
                             />
                           </Form.Group>
                         </Col>
-                        <Col md={1}>
+                        <Col md={2}>
                           <Form.Group>
-                            <Form.Label>Vikt</Form.Label>
+                            <Form.Label>Vikt (kg)</Form.Label>
                             <Form.Control
                               type="number"
                               value={exercise.weight}
                               onChange={(e) => handleExerciseChange(index, 'weight', e.target.value)}
-                              placeholder="kg"
+                              placeholder="20"
                               step="0.5"
+                              min="0"
                             />
                           </Form.Group>
                         </Col>
