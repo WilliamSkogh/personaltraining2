@@ -14,6 +14,7 @@ public static class Server
         ExerciseRoutes.Start();  
         GoalRoutes.Start();
         StatsRoutes.Start();
+        ExportRoutes.Start();
         RestApi.Start();
         Session.Start();
         // Start the server on port 3001

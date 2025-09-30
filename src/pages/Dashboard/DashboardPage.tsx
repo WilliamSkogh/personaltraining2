@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/Common/LoadingSpinner';
+import ExportButton from '../../components/Common/ExportButton';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface WorkoutFrequency {
@@ -420,6 +421,7 @@ const DashboardPage: React.FC = () => {
                     🏋️ Nytt pass
                   </Button>
                 </Link>
+                <ExportButton />
                 <Link to="/exercises">
                   <Button variant="outline-secondary" className="w-100">
                     📝 Övningar
