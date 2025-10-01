@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout/Layout';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
@@ -17,48 +18,50 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <Layout>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/workouts" element={
-              <ProtectedRoute>
-                <WorkoutsListPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/workouts/new" element={
-              <ProtectedRoute>
-                <CreateWorkoutPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/workouts/:id" element={
-              <ProtectedRoute>
-                <WorkoutDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/exercises" element={
-              <ProtectedRoute>
-                <ExercisesPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/goals" element={
-              <ProtectedRoute>
-                <GoalsPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<div>404 - Sida ej hittad</div>} />
-          </Routes>
-        </Layout>
-      </Router>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <Layout>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/workouts" element={
+                <ProtectedRoute>
+                  <WorkoutsListPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/workouts/new" element={
+                <ProtectedRoute>
+                  <CreateWorkoutPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/workouts/:id" element={
+                <ProtectedRoute>
+                  <WorkoutDetailPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/exercises" element={
+                <ProtectedRoute>
+                  <ExercisesPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/goals" element={
+                <ProtectedRoute>
+                  <GoalsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<div>404 - Sida ej hittad</div>} />
+            </Routes>
+          </Layout>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 };
 

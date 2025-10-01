@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import ThemeToggle from '../Common/ThemeToggle';
 
 const Navigation: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -53,7 +54,8 @@ const Navigation: React.FC = () => {
             </Nav.Link>
           </Nav>
           
-          <Nav>
+          <Nav className="d-flex align-items-center gap-2">
+            <ThemeToggle />
             <NavDropdown title={`Hej, ${(user as any)?.Username}`} id="user-dropdown">
               <NavDropdown.Item as={Link} to="/profile">
                 Min profil
