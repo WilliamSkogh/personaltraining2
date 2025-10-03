@@ -8,23 +8,81 @@ public static class LoginRoutes
 
     public static void Start()
     {
+        // POST /api/register - Registrera ny användare
+        App.MapPost("/api/register", (HttpContext context, JsonElement bodyJson) =>
+        {
+            var body = JSON.Parse(bodyJson.ToString());
+
+            // Kolla om användaren redan finns (case-insensitive)
+            var existingUser = SQLQueryOne(
+                "SELECT * FROM users WHERE LOWER(Email) = LOWER($email)",
+                new { email = body.Email },
+                context
+            );
+
+            if (existingUser != null && !existingUser.HasKey("error"))
+            {
+                return RestResult.Parse(context, new { error = "User already exists." });
+            }
+
+            // Kolla om det är första användaren (blir automatiskt admin)
+            var userCount = SQLQueryOne("SELECT COUNT(*) as count FROM users", null, context);
+            var isFirstUser = userCount.count == 0;
+
+            // Skapa användaren med ReqBodyParse för att hantera lösenordskryptering
+            var parsed = ReqBodyParse("users", Obj(new
+            {
+                Email = body.Email,
+                Username = body.Username,
+                password = body.password,
+                Role = isFirstUser ? "admin" : "user"
+            }));
+
+            var sql = @"
+                INSERT INTO users (Email, Username, PasswordHash, Role)
+                VALUES ($Email, $Username, $PasswordHash, $Role)
+            ";
+
+            var result = SQLQueryOne(sql, parsed.body, context);
+
+            if (result.HasKey("error"))
+            {
+                return RestResult.Parse(context, result);
+            }
+
+            // Hämta den nyskapade användaren (case-insensitive)
+            var newUser = SQLQueryOne(
+                "SELECT * FROM users WHERE LOWER(Email) = LOWER($email)",
+                new { email = body.Email },
+                context
+            );
+
+            // Logga in användaren direkt
+            newUser.Delete("PasswordHash");
+            Session.Set(context, "user", newUser);
+
+            return RestResult.Parse(context, newUser);
+        });
+
         App.MapPost("/api/login", (HttpContext context, JsonElement bodyJson) =>
         {
             var user = GetUser(context);
             var body = JSON.Parse(bodyJson.ToString());
 
             // If there is a user logged in already
-         if (user != null)
+            if (user != null)
             {
-            Session.Set(context, "user", null);
+                Session.Set(context, "user", null);
             }
 
-            // Find the user in the DB
+            // Find the user in the DB (case-insensitive)
             var dbUser = SQLQueryOne(
-                "SELECT * FROM users WHERE email = $email",
-                new { body.email }
+                "SELECT * FROM users WHERE LOWER(Email) = LOWER($email)",
+                new { body.email },
+                context
             );
-            if (dbUser == null)
+            
+            if (dbUser == null || dbUser.HasKey("error"))
             {
                 return RestResult.Parse(context, new { error = "No such user." });
             }
@@ -40,7 +98,7 @@ public static class LoginRoutes
             }
 
             // Add the user to the session, without password
-            dbUser.Delete("password");
+            dbUser.Delete("PasswordHash");
             Session.Set(context, "user", dbUser);
 
             // Return the user

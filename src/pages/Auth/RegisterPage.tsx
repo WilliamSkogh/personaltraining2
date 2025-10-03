@@ -11,8 +11,7 @@ const RegisterPage: React.FC = () => {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,8 +35,6 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       await register({
         username: formData.username,
@@ -46,9 +43,7 @@ const RegisterPage: React.FC = () => {
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registrering misslyckades');
-    } finally {
-      setLoading(false);
+      setError(err.message || 'Registrering misslyckades');
     }
   };
 
@@ -116,9 +111,9 @@ const RegisterPage: React.FC = () => {
                   type="submit" 
                   variant="primary" 
                   className="w-100" 
-                  disabled={loading}
+                  disabled={isLoading}
                 >
-                  {loading ? 'Skapar konto...' : 'Skapa konto'}
+                  {isLoading ? 'Skapar konto...' : 'Skapa konto'}
                 </Button>
               </Form>
               

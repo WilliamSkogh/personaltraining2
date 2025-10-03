@@ -13,6 +13,7 @@ import WorkoutDetailPage from './pages/Workouts/WorkoutDetailPage';
 import CreateWorkoutPage from './pages/Workouts/CreateWorkoutPage';
 import ExercisesPage from './pages/Exercises/ExercisesPage';
 import GoalsPage from './pages/Goals/GoalsPage';
+import AdminPanel from './pages/Admin/AdminPanel';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -53,6 +54,11 @@ const App: React.FC = () => {
               <Route path="/goals" element={
                 <ProtectedRoute>
                   <GoalsPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute>
+                  <AdminPanel />
                 </ProtectedRoute>
               } />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import ThemeToggle from '../Common/ThemeToggle';
 
 const Navigation: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -17,7 +17,6 @@ const Navigation: React.FC = () => {
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
-      // Navigera ändå eftersom vi rensade lokal state
       navigate('/login');
     } finally {
       setIsLoggingOut(false);
@@ -52,11 +51,16 @@ const Navigation: React.FC = () => {
             <Nav.Link as={Link} to="/goals">
               Mål
             </Nav.Link>
+            {isAdmin && (
+              <Nav.Link as={Link} to="/admin">
+                Admin
+              </Nav.Link>
+            )}
           </Nav>
           
           <Nav className="d-flex align-items-center gap-2">
             <ThemeToggle />
-            <NavDropdown title={`Hej, ${(user as any)?.Username}`} id="user-dropdown">
+            <NavDropdown title={`Hej, ${user?.Username}`} id="user-dropdown">
               <NavDropdown.Item as={Link} to="/profile">
                 Min profil
               </NavDropdown.Item>

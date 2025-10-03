@@ -1,15 +1,14 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 
 interface User {
-  id: number;
-  username: string;
-  email: string;
-  role: 'user' | 'admin';
-  createdAt: string;
+  Id: number;
+  Email: string;
+  Username: string;
+  Role: 'user' | 'admin';
 }
 
 interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -33,7 +32,31 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Kolla om användaren redan är inloggad vid mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/login', {
+        credentials: 'include',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (!data.error) {
+          setUser(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (credentials: LoginCredentials) => {
     setIsLoading(true);
@@ -41,8 +64,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          email: credentials.username,  // Backend förväntar sig 'email'
+          email: credentials.email,
           password: credentials.password
         })
       });
@@ -54,7 +78,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const data = await response.json();
       
-      // Kolla om backend returnerade error
       if (data.error) {
         throw new Error(data.error);
       }
@@ -70,12 +93,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (userData: RegisterData) => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          Username: userData.username,
           Email: userData.email,
+          Username: userData.username,
           password: userData.password
         })
       });
@@ -91,9 +115,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error(data.error);
       }
       
-      // Efter registrering, logga in automatiskt
-      await login({ username: userData.email, password: userData.password });
-      
+      setUser(data);
     } catch (error) {
       throw new Error(error instanceof Error ? error.message : 'Registration failed');
     } finally {
@@ -104,16 +126,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     setIsLoading(true);
     try {
-      // Anropa backend logout endpoint
       await fetch('/api/login', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
+        credentials: 'include',
       });
     } catch (error) {
-      // Även om backend-anropet misslyckas, logga ut lokalt
       console.warn('Backend logout failed:', error);
     } finally {
-      // Rensa lokal state oavsett
       setUser(null);
       setIsLoading(false);
     }
@@ -126,10 +145,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     login,
     register,
     logout,
-    isAdmin: user?.role === 'admin'
+    isAdmin: user?.Role === 'admin'
   };
 
-  return React.createElement(AuthContext.Provider, { value }, children);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
