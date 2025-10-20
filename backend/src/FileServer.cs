@@ -11,6 +11,56 @@ public static class FileServer
             Globals.frontendPath
         );
 
+
+        if (!Directory.Exists(FPath))
+        {
+            Directory.CreateDirectory(FPath);
+            var message = @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Build Required</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { margin-bottom: 20px; }
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>⚠️ Build Required</h1>
+        <p>The frontend needs to be built first.</p>
+        <p>Run this command in the project root:</p>
+        <code>npm run build</code>
+        <p style='margin-top: 20px;'>Then refresh this page.</p>
+    </div>
+</body>
+</html>";
+            File.WriteAllText(Path.Combine(FPath, "index.html"), message);
+        }
+
         HandleStatusCodes();
         ServeFiles();
         ServeFileLists();

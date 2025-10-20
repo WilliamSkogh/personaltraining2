@@ -1,27 +1,54 @@
 namespace WebApp;
 public static class Acl
 {
-    private static Arr rules;
+    private static Arr rules = Arr();
 
     public static async void Start()
     {
-        // Read rules from db once a minute
+
+        if (!Globals.aclOn) { return; }
+
+
         while (true)
         {
-            UnpackRules(SQLQuery("SELECT * FROM acl ORDER BY allow"));
+            try
+            {
+                UnpackRules(SQLQuery("SELECT * FROM acl ORDER BY allow"));
+            }
+            catch (Exception ex)
+            {
+                Log("ACL Error:", ex.Message);
+
+                rules = Arr();
+            }
             await Task.Delay(60000);
         }
     }
 
     public static void UnpackRules(Arr allRules)
     {
-        // Unpack db response -> routes to regexps and userRoles to arrays
-        rules = allRules.Map(x => new
+
+        if (allRules == null || allRules.Length == 0)
         {
-            ___ = x,
-            regexPattern = @"^" + x.route.Replace("/", @"\/") + @"\/",
-            userRoles = ((Arr)Arr(x.userRoles.Split(','))).Map(x => x.Trim())
-        });
+            rules = Arr();
+            return;
+        }
+
+        // Unpack db response -> routes to regexps and userRoles to arrays
+        try
+        {
+            rules = allRules.Map(x => new
+            {
+                ___ = x,
+                regexPattern = @"^" + (x.route ?? "").Replace("/", @"\/") + @"\/",
+                userRoles = ((Arr)Arr((x.userRoles ?? "").Split(','))).Map(y => (y ?? "").Trim())
+            });
+        }
+        catch (Exception ex)
+        {
+            Log("ACL UnpackRules Error:", ex.Message);
+            rules = Arr();
+        }
     }
 
     public static bool Allow(
